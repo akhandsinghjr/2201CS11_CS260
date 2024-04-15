@@ -4,167 +4,325 @@
 
 -- 2201CS11 | Akhand P Singh
 
--- Query 1
-SELECT player_name
-FROM players
-WHERE batting_hand = 'Left_Hand' AND country_name = 'England'
-ORDER BY player_name;
+---1.
+DELIMITER //
+CREATE TRIGGER IncreaseSalaryTrigger
+BEFORE INSERT ON employees
+FOR EACH ROW
+BEGIN
+    IF NEW.salary < 60000 THEN
+        SET NEW.salary = NEW.salary * 1.10;
+    END IF;
+END;
+//
+DELIMITER ;
 
--- Query 2
-SELECT player_name, FLOOR(DATEDIFF('2018-12-02', dob) / 365) AS player_age
-FROM players
-WHERE bowling_skill = 'Legbreak googly' AND FLOOR(DATEDIFF('2018-12-02', dob) / 365) >= 28
-ORDER BY player_age DESC, player_name;
 
--- Query 3
-SELECT match_id, toss_winner
-FROM matches
-WHERE toss_decision = 'Bat'
-ORDER BY match_id;
+---2.
+DELIMITER //
+CREATE TRIGGER PreventDeleteDepartmentTrigger
+BEFORE DELETE ON departments
+FOR EACH ROW
+BEGIN
+    DECLARE employee_count INT;
+    SELECT COUNT(*) INTO employee_count
+    FROM employees
+    WHERE department_id = OLD.department_id;
+    IF employee_count > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot delete department with assigned employees';
+    END IF;
+END;
+//
+DELIMITER ;
 
--- Query 4
-SELECT over_id, SUM(runs_scored) AS total_runs
-FROM balls
-WHERE match_id = 335987 AND runs_scored <= 7
-GROUP BY over_id
-ORDER BY total_runs DESC, over_id;
 
--- Query 5
-SELECT DISTINCT p.player_name
-FROM players p
-INNER JOIN dismissals d ON p.player_id = d.player_out
-WHERE d.kind_out = 'Bowled'
-ORDER BY p.player_name;
+---3.
+DELIMITER //
+CREATE TRIGGER SalaryUpdateAuditTrigger
+AFTER UPDATE ON employees
+FOR EACH ROW
+BEGIN
+    INSERT INTO salary_audit (emp_id, old_salary, new_salary, employee_name, updated_at)
+    VALUES (OLD.emp_id, OLD.salary, NEW.salary, CONCAT(NEW.first_name, ' ', NEW.last_name), NOW());
+END;
+//
+DELIMITER ;
 
--- Query 6
-SELECT m.match_id, t1.name AS team_1, t2.name AS team_2, CASE WHEN m.match_winner = t1.team_id THEN t1.name ELSE t2.name END AS winning_team_name, m.win_margin
-FROM matches m
-JOIN teams t1 ON m.team_1 = t1.team_id
-JOIN teams t2 ON m.team_2 = t2.team_id
-WHERE m.win_margin >= 60
-ORDER BY m.win_margin, m.match_id;
 
--- Query 7
-SELECT player_name
-FROM players
-WHERE batting_hand = 'Left_Hand' AND FLOOR(DATEDIFF('2018-12-02', dob) / 365) < 30
-ORDER BY player_name;
+---4.
+DELIMITER //
+CREATE TRIGGER AssignDepartmentTrigger
+BEFORE INSERT ON employees
+FOR EACH ROW
+BEGIN
+    IF NEW.salary <= 60000 THEN
+        SET NEW.department_id = 3;
+    END IF;
+END;
+//
+DELIMITER ;
 
--- Query 8
-SELECT match_id, SUM(runs_scored) AS total_runs
-FROM balls
-GROUP BY match_id
-ORDER BY match_id;
 
--- Query 9
+---5.
+DELIMITER //
+CREATE TRIGGER UpdateManagerSalaryTrigger
+AFTER INSERT ON employees
+FOR EACH ROW
+BEGIN
+    UPDATE employees
+    SET salary = (SELECT MAX(salary) FROM employees WHERE department_id = NEW.department_id)
+    WHERE emp_id = (SELECT manager_id FROM departments WHERE department_id = NEW.department_id);
+END;
+//
+DELIMITER ;
 
-WITH MaxRunsPerOver AS (
-    SELECT match_id, over_id, MAX(runs_scored) AS max_runs
-    FROM balls
-    GROUP BY match_id, over_id
-)
-SELECT m.match_id, mpo.over_id, mpo.max_runs, p.player_name
-FROM MaxRunsPerOver mpo
-JOIN balls b ON mpo.match_id = b.match_id AND mpo.over_id = b.over_id AND mpo.max_runs = b.runs_scored
-JOIN players p ON b.bowler = p.player_id
-ORDER BY m.match_id, mpo.over_id;
 
--- Query 10
-SELECT p.player_name, COUNT(*) AS number
-FROM dismissals d
-JOIN players p ON d.player_out = p.player_id
-WHERE d.kind_out = 'Run out'
-GROUP BY p.player_name
-ORDER BY number DESC, p.player_name;
+---6.
+DELIMITER //
+CREATE TRIGGER PreventUpdateDepartmentTrigger
+BEFORE UPDATE ON employees
+FOR EACH ROW
+BEGIN
+    DECLARE project_count INT;
+    SELECT COUNT(*) INTO project_count
+    FROM works_on
+    WHERE emp_id = NEW.emp_id;
+    IF project_count > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot update department for employee with assigned projects';
+    END IF;
+END;
+//
+DELIMITER ;
 
--- Query 11
-SELECT kind_out, COUNT(*) AS number
-FROM dismissals
-GROUP BY kind_out
-ORDER BY number DESC, kind_out;
 
--- Query 12
-SELECT t.name, COUNT(*) AS number
-FROM matches m
-JOIN teams t ON m.match_winner = t.team_id
-GROUP BY t.name
-ORDER BY t.name;
+---7.
+DELIMITER //
+CREATE TRIGGER UpdateAverageSalaryTrigger
+AFTER UPDATE ON employees
+FOR EACH ROW
+BEGIN
+    DECLARE avg_salary DECIMAL(10, 2);
+    SELECT AVG(salary) INTO avg_salary
+    FROM employees
+    WHERE department_id = NEW.department_id;
+    UPDATE departments
+    SET average_salary = avg_salary
+    WHERE department_id = NEW.department_id;
+END;
+//
+DELIMITER ;
 
--- Query 13
-SELECT venue
-FROM (
-    SELECT venue, COUNT(*) AS wides_count
-    FROM balls
-    WHERE extra_type = 'Wides'
-    GROUP BY venue
-) AS venue_wides
-ORDER BY wides_count DESC, venue
-LIMIT 1;
 
--- Query 14
-SELECT venue
-FROM (
-    SELECT venue, COUNT(*) AS num_wins
-    FROM matches
-    WHERE toss_winner = match_winner
-    GROUP BY venue
-) AS win_venues
-ORDER BY num_wins DESC, venue;
+---8.
+DELIMITER //
+CREATE TRIGGER DeleteWorksOnTrigger
+AFTER DELETE ON employees
+FOR EACH ROW
+BEGIN
+    DELETE FROM works_on WHERE emp_id = OLD.emp_id;
+END;
+//
+DELIMITER ;
 
--- Query 15
-SELECT p.player_name
-FROM (
-    SELECT bowler, COUNT(*) AS wickets, SUM(runs_given) AS runs_given
-    FROM balls
-    WHERE kind_out <> 'Not out'
-    GROUP BY bowler
-) AS wickets_table
-JOIN players p ON wickets_table.bowler = p.player_id
-ORDER BY (runs_given / wickets) ASC, p.player_name
-LIMIT 1;
 
--- Query 16
-SELECT p.player_name, t.name
-FROM (
-    SELECT match_winner, player_out
-    FROM matches
-    JOIN dismissals ON matches.match_id = dismissals.match_id
-    WHERE role = 'CaptainKeeper'
-) AS match_captains
-JOIN players p ON match_captains.player_out = p.player_id
-JOIN teams t ON p.team_id = t.team_id
-ORDER BY p.player_name;
+---9.
+DELIMITER //
+CREATE TRIGGER PreventInsertEmployeeTrigger
+BEFORE INSERT ON employees
+FOR EACH ROW
+BEGIN
+    DECLARE min_salary DECIMAL(10, 2);
+    SELECT minimum_salary INTO min_salary
+    FROM departments
+    WHERE department_id = NEW.department_id;
+    IF NEW.salary < min_salary THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Employee salary cannot be less than department minimum';
+    END IF;
+END;
+//
+DELIMITER ;
 
--- Query 17
-SELECT p.player_name, SUM(b.runs_scored) AS runs_scored
-FROM balls b
-JOIN players p ON b.striker = p.player_id
-GROUP BY p.player_name
-HAVING SUM(b.runs_scored) >= 50
-ORDER BY runs_scored DESC, p.player_name;
 
--- Query 18
-SELECT p.player_name
-FROM balls b
-JOIN players p ON b.striker = p.player_id
-JOIN dismissals d ON b.match_id = d.match_id AND b.over_id = d.over_id AND b.ball_id = d.ball_id
-JOIN matches m ON b.match_id = m.match_id
-WHERE b.runs_scored >= 100 AND m.match_winner <> b.team_batting
-ORDER BY p.player_name;
+---10.
+DELIMITER //
+CREATE TRIGGER UpdateTotalBudgetTrigger
+AFTER UPDATE ON employees
+FOR EACH ROW
+BEGIN
+    DECLARE total_salary DECIMAL(10, 2);
+    SELECT SUM(salary) INTO total_salary
+    FROM employees
+    WHERE department_id = NEW.department_id;
+    UPDATE departments
+    SET total_salary_budget = total_salary
+    WHERE department_id = NEW.department_id;
+END;
+//
+DELIMITER ;
 
--- Query 19
-SELECT match_id, venue
-FROM matches
-WHERE (team_1 = 'KKR' OR team_2 = 'KKR') AND match_winner <> 'KKR'
-ORDER BY match_id;
 
--- Query 20
-SELECT p.player_name
-FROM balls b
-JOIN players p ON b.striker = p.player_id
-JOIN matches m ON b.match_id = m.match_id
-WHERE m.season_id = 5 AND b.innings_no <= 4
-GROUP BY p.player_name
-HAVING COUNT(DISTINCT m.match_id) = 10
-ORDER BY (SUM(b.runs_scored) / COUNT(DISTINCT m.match_id)) DESC, p.player_name
-LIMIT 10;
+---11.
+---create table email_queue
+CREATE TABLE email_queue (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    recipient_email VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+---trigger
+DELIMITER //
+CREATE TRIGGER NewEmployeeNotificationTrigger
+AFTER INSERT ON employees
+FOR EACH ROW
+BEGIN
+    DECLARE recipient_email VARCHAR(255);
+    DECLARE subject VARCHAR(255);
+    DECLARE message TEXT;
+
+    SET recipient_email = 'hr@example.com'; -- Change this to the HR email address
+    SET subject = 'New Employee Hired';
+    SET message = CONCAT('A new employee has been hired. Name: ', NEW.first_name, ' ', NEW.last_name, ', ID: ', NEW.emp_id);
+
+    INSERT INTO email_queue (recipient_email, subject, message)
+    VALUES (recipient_email, subject, message);
+END;
+//
+DELIMITER ;
+
+---python code to sent emails (read data from email_queue)
+-- import smtplib
+-- import mysql.connector
+-- from email.message import EmailMessage
+
+-- # Connect to the database
+-- db = mysql.connector.connect(
+--     host="your_host",
+--     user="your_username",
+--     password="your_password",
+--     database="your_database"
+-- )
+-- cursor = db.cursor()
+
+-- # Select unsent emails from the email_queue table
+-- cursor.execute("SELECT id, recipient_email, subject, message FROM email_queue WHERE sent_at IS NULL")
+-- emails = cursor.fetchall()
+
+-- # Send emails
+-- for email in emails:
+--     msg = EmailMessage()
+--     msg.set_content(email[3])
+--     msg["Subject"] = email[2]
+--     msg["From"] = "your_email@example.com"  # Change this to your email address
+--     msg["To"] = email[1]
+
+--     try:
+--         # Send the email
+--         with smtplib.SMTP("smtp.yourmailserver.com", 587) as smtp:
+--             smtp.starttls()
+--             smtp.login("your_email@example.com", "your_password")  # Change this to your email and password
+--             smtp.send_message(msg)
+
+--         # Mark the email as sent in the database
+--         cursor.execute("UPDATE email_queue SET sent_at = CURRENT_TIMESTAMP WHERE id = %s", (email[0],))
+--         db.commit()
+--     except Exception as e:
+--         print(f"Failed to send email: {e}")
+
+-- # Close the database connection
+-- cursor.close()
+-- db.close()
+
+
+
+
+---12.
+DELIMITER //
+CREATE TRIGGER PreventInsertDepartmentTrigger
+BEFORE INSERT ON departments
+FOR EACH ROW
+BEGIN
+    IF NEW.location IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Location must be specified for a new department';
+    END IF;
+END;
+//
+DELIMITER ;
+
+
+---13.
+DELIMITER //
+CREATE TRIGGER UpdateEmployeeDepartmentNameTrigger
+AFTER UPDATE ON departments
+FOR EACH ROW
+BEGIN
+    UPDATE employees
+    SET department_name = NEW.department_name
+    WHERE department_id = NEW.department_id;
+END;
+//
+DELIMITER ;
+
+
+---14.
+CREATE TABLE employee_audit (
+    audit_id INT AUTO_INCREMENT PRIMARY KEY,
+    operation_type VARCHAR(10) NOT NULL,
+    emp_id INT,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    salary DECIMAL(10, 2),
+    department_id INT,
+    operation_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+DELIMITER //
+
+CREATE TRIGGER EmployeeAuditTrigger
+BEFORE INSERT ON employees
+FOR EACH ROW
+BEGIN
+    INSERT INTO employee_audit (operation_type, emp_id, first_name, last_name, salary, department_id)
+    VALUES ('INSERT', NEW.emp_id, NEW.first_name, NEW.last_name, NEW.salary, NEW.department_id);
+END;
+//
+
+CREATE TRIGGER EmployeeAuditTriggerUpdate
+BEFORE UPDATE ON employees
+FOR EACH ROW
+BEGIN
+    INSERT INTO employee_audit (operation_type, emp_id, first_name, last_name, salary, department_id)
+    VALUES ('UPDATE', OLD.emp_id, OLD.first_name, OLD.last_name, OLD.salary, OLD.department_id);
+END;
+//
+
+CREATE TRIGGER EmployeeAuditTriggerDelete
+BEFORE DELETE ON employees
+FOR EACH ROW
+BEGIN
+    INSERT INTO employee_audit (operation_type, emp_id, first_name, last_name, salary, department_id)
+    VALUES ('DELETE', OLD.emp_id, OLD.first_name, OLD.last_name, OLD.salary, OLD.department_id);
+END;
+//
+
+DELIMITER ;
+
+
+---15.
+DELIMITER //
+CREATE TRIGGER GenerateEmployeeIdTrigger
+BEFORE INSERT ON employees
+FOR EACH ROW
+BEGIN
+    DECLARE next_id INT;
+    SET next_id = (SELECT COALESCE(MAX(emp_id), 0) + 1 FROM employees);
+    SET NEW.emp_id = next_id;
+END;
+//
+DELIMITER ;
+
