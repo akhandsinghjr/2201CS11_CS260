@@ -1,0 +1,18 @@
+-- 2201CS11 | Akhand P Singh
+
+1.	Πemp_id, first_name ,last_name,salary,department_id (σdepartment_name = ‘Engineering’ (employees ⋈ departments))
+2.	Πfirst_name,salary (employees)
+3.	Πemp_id , first_name,last_name,salary,department_id(employees ⋈ σmanager_id= ‘emp_id’(departments) )
+4.	 σsalary > 60000 (employees)
+5.	employees ⋈ departments
+6.	employees × projects
+7.	Πemp_id, first_name,last_name,salary,department_id (employees - (employees ⋈ σmanager_id=emp_id(departments)))
+8.	 departments ⋈ projects
+9.	Πdepartment_name,location(departments)
+10.	Σbudget > 100000(projects)
+11.	Πemp_id, first_name, last_name,salary,department_id(σdepartment_id=’Sales’(employees) ⋈ σmanager_id=emp_id(departments))
+12.	Πemp_id,first_name,last_name,salary,department_id(σdepartment_name=’Engineering’(employees)) ∪ πemp_id,first_name,last_name,last_name,salary,department_name(σdepartment_name=’Finance’(employees))
+13.	Πemp_id,first_name,last_name,salary,department_id(employees - (employees ⋈ projects))
+14.	employees ⋈ projects
+15.	πemp_id,first_name,last_name,salary,department_id (σsalary<50000 V salary > 70000(employees))
+
