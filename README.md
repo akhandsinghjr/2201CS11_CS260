@@ -1,6 +1,6 @@
 # 2201CS11_CS260
 
-##Authors:
+##Authors :
 - Akhand P Singh (@akhandsinghjr)
 - Anchal Dubey (@anchaldubey)
 
