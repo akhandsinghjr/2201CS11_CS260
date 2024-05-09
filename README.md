@@ -9,6 +9,7 @@
 
 ## ER Diagrams :
 - https://drive.google.com/file/d/1Z-sBhnY-cfMBXLjqaUVxxj0K003z61v4/view?usp=sharing 
+- Also we have kept the pdf in the proj1 folder
 
 ## Used Technologies :
  
