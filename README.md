@@ -1,16 +1,16 @@
 # 2201CS11_CS260
 
 ##Authors:
-Akhand P Singh (@akhandsinghjr)
-Anchal Dubey (@anchaldubey)
+- Akhand P Singh (@akhandsinghjr)
+- Anchal Dubey (@anchaldubey)
 
 ## Used Technologies :
  
-- <img src="https://static-00.iconduck.com/assets.00/node-js-icon-1817x2048-g8tzf91e.png" width="25" height="25"/>   NODE JS (EXPRESS)
+- <img src="https://static-00.iconduck.com/assets.00/node-js-icon-1817x2048-g8tzf91e.png" width="25" height="25"/>   NODE JS
 
-- <img src="https://cdn.worldvectorlogo.com/logos/mysql-4.svg" width="25" height="25"/>    MYSQL DB
+- <img src="https://cdn.worldvectorlogo.com/logos/mysql-4.svg" width="25" height="25"/>    Mysql
  
-- <img src="https://cdn.worldvectorlogo.com/logos/docker-4.svg" width="25" height="25"/> 
+- <img src="https://cdn.worldvectorlogo.com/logos/docker-4.svg" width="25" height="25"/>  Docker
 
 
 
