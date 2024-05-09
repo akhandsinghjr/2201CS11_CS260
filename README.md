@@ -7,6 +7,8 @@
 
 ## Youtube Link : https://youtu.be/TpbHbeYuWuI
 
+## ER Diagrams :
+- https://drive.google.com/file/d/1Z-sBhnY-cfMBXLjqaUVxxj0K003z61v4/view?usp=sharing 
 
 ## Used Technologies :
  
