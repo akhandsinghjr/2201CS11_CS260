@@ -1,8 +1,12 @@
 # 2201CS11_CS260
 
-##Authors :
-- Akhand P Singh (@akhandsinghjr)
-- Anchal Dubey (@anchaldubey)
+## Authors :
+
+- Akhand Singh (2201CS11) [@akhandsinghjr](https://github.com/akhandsinghjr)
+- Anchal Dubey (2201CS15) [@anchaldubey](https://github.com/anchaldubey)
+
+## Youtube Link :
+
 
 ## Used Technologies :
  
