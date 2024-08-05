@@ -1,4 +1,4 @@
-# 2201CS11_CS260
+# Faculty Recruitment Portal
 
 ## Authors :
 
